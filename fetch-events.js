@@ -28,7 +28,7 @@ jobs:
         run: |
           git config user.name "Round Here NW Bot"
           git config user.email "bot@roundherenw.co.uk"
-          git pull --rebase
           git add events.json
           git diff --staged --quiet || git commit -m "chore: update events $(date -u +%Y-%m-%d)"
-          git push
+          git pull --rebase origin main
+          git push origin main

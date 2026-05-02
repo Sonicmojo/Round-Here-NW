@@ -1,1 +1,73 @@
+name: Fetch Events Daily
 
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  fetch-events:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch events and save
+        env:
+          EVENTBRITE_TOKEN: ${{ secrets.EVENTBRITE_TOKEN }}
+        run: |
+          node -e "
+          const https = require('https');
+          const fs = require('fs');
+          const TOKEN = process.env.EVENTBRITE_TOKEN;
+          const AREAS = [
+            { label: 'NW6', lat: 51.5465, lng: -0.1908, postcode: 'NW6' },
+            { label: 'NW10', lat: 51.5354, lng: -0.2312, postcode: 'NW10' },
+            { label: 'NW2', lat: 51.5563, lng: -0.2148, postcode: 'NW2' }
+          ];
+          function get(url) {
+            return new Promise((resolve, reject) => {
+              https.get(url, res => {
+                let d = '';
+                res.on('data', c => d += c);
+                res.on('end', () => resolve(JSON.parse(d)));
+              }).on('error', reject);
+            });
+          }
+          async function main() {
+            const all = [];
+            for (const area of AREAS) {
+              const url = 'https://www.eventbriteapi.com/v3/events/search/?location.latitude=' + area.lat + '&location.longitude=' + area.lng + '&location.within=3km&expand=venue&token=' + TOKEN + '&page_size=50';
+              console.log('Fetching ' + area.label);
+              const data = await get(url);
+              const events = (data.events || []).map(ev => ({
+                id: ev.id,
+                title: ev.name && ev.name.text || '',
+                cat: 'community',
+                postcode: area.postcode,
+                venue: ev.venue && ev.venue.name || 'Venue TBC',
+                date: ev.start && ev.start.local || '',
+                dateKey: 'month',
+                url: ev.url,
+                isFree: ev.is_free,
+                emoji: '📅',
+                bg: '#DBEAFE',
+                lat: parseFloat(ev.venue && ev.venue.latitude) || null,
+                lng: parseFloat(ev.venue && ev.venue.longitude) || null
+              }));
+              console.log(events.length + ' events in ' + area.label);
+              all.push(...events);
+            }
+            const seen = new Set();
+            const unique = all.filter(e => seen.has(e.id) ? false : seen.add(e.id));
+            fs.writeFileSync('events.json', JSON.stringify({ lastUpdated: new Date().toISOString(), totalEvents: unique.length, events: unique }, null, 2));
+            console.log('Done! ' + unique.length + ' events written.');
+          }
+          main().catch(e => { console.error(e); process.exit(1); });
+          "
+
+      - name: Save events.json
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update events"
+          file_pattern: events.json
+          push_options: '--force'

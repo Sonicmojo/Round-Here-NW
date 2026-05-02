@@ -26,13 +26,11 @@ jobs:
           EVENTBRITE_TOKEN: ${{ secrets.EVENTBRITE_TOKEN }}
         run: node fetch-events.js
 
-      - name: Push updated events.json
+- name: Push updated events.json
         run: |
           git config user.name "Round Here NW Bot"
           git config user.email "bot@roundherenw.co.uk"
           git add events.json
           git diff --staged --quiet && echo "No changes" && exit 0
           git commit -m "chore: update events $(date -u +%Y-%m-%d)"
-          git fetch origin main
-          git rebase origin/main
-          git push origin main
+          git push --force origin main

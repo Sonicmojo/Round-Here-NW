@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Round Here NW — What's On in NW2, NW6 & NW10</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <style>
+    :root {
+      --cream: #F5EFE0;
+      --warm-white: #FBF7F0;
+      --terracotta: #C4613A;
+      --terracotta-light: #E8835E;
+      --forest: #3B5C45;
+      --forest-light: #527A5F;
+      --ochre: #D4A03A;
+      --warm-brown: #6B4C35;
+      --charcoal: #2C2825;
+      --mid-grey: #8A7E72;
+      --light-border: #E0D5C5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--charcoal);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 64px;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--cream);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .logo span { color: var(--terracotta-light); }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav ul a {
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      opacity: 0.75;
+      transition: opacity 0.2s;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    nav ul a:hover, nav ul a.active { opacity: 1; }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--charcoal);
+      padding: 4rem 2rem 3.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(196,97,58,0.18) 0%, transparent 60%),
+                  radial-gradient(ellipse at 75% 30%, rgba(59,92,69,0.2) 0%, transparent 55%);
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: var(--terracotta);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.9rem;
+      border-radius: 2rem;
+      margin-bottom: 1.2rem;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 900;
+      color: var(--cream);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--terracotta-light);
+    }
+
+    .hero p {
+      color: rgba(245,239,224,0.65);
+      font-size: 1.05rem;
+      font-weight: 300;
+      max-width: 500px;
+      margin: 0 auto 2rem;
+      position: relative;
+    }
+
+    .postcode-pills {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .postcode-pill {
+      background: rgba(245,239,224,0.1);
+      border: 1px solid rgba(245,239,224,0.2);
+      color: var(--cream);
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .postcode-pill:hover, .postcode-pill.active {
+      background: var(--terracotta);
+      border-color: var(--terracotta);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 0;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      align-items: start;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      padding-right: 2rem;
+    }
+
+    .sidebar-section {
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 0.75rem;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      border: 1.5px solid var(--light-border);
+      border-radius: 8px;
+      background: var(--warm-white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--charcoal);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box:focus { border-color: var(--terracotta); }
+    .search-box::placeholder { color: var(--mid-grey); }
+
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .cat-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.8rem;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--charcoal);
+      font-weight: 400;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .cat-btn:hover { background: var(--warm-white); }
+
+    .cat-btn.active {
+      background: var(--forest);
+      color: white;
+    }
+
+    .cat-icon { font-size: 1.1rem; }
+
+    .cat-count {
+      margin-left: auto;
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.08);
+      padding: 0.1rem 0.5rem;
+      border-radius: 1rem;
+      color: inherit;
+      opacity: 0.7;
+    }
+
+    .cat-btn.active .cat-count { background: rgba(255,255,255,0.2); opacity: 1; }
+
+    /* Date filter */
+    .date-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .date-btn {
+      padding: 0.4rem 0.85rem;
+      border-radius: 2rem;
+      border: 1.5px solid var(--light-border);
+      background: var(--warm-white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--charcoal);
+      transition: all 0.15s;
+    }
+
+    .date-btn:hover { border-color: var(--terracotta); color: var(--terracotta); }
+
+    .date-btn.active {
+      background: var(--terracotta);
+      border-color: var(--terracotta);
+      color: white;
+    }
+
+    /* ── CONTENT AREA ── */
+    .content-area {}
+
+    .view-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .results-count {
+      font-size: 0.9rem;
+      color: var(--mid-grey);
+    }
+
+    .results-count strong { color: var(--charcoal); }
+
+    .toggle-btns {
+      display: flex;
+      gap: 0.3rem;
+      background: var(--warm-white);
+      border: 1.5px solid var(--light-border);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .toggle-btn {
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--mid-grey);
+      transition: all 0.15s;
+    }
+
+    .toggle-btn.active {
+      background: var(--charcoal);
+      color: white;
+    }
+
+    /* ── EVENT CARDS ── */
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .event-card {
+      background: var(--warm-white);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1.5px solid var(--light-border);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .event-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(44,40,37,0.12);
+    }
+
+    .card-thumb {
+      height: 130px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      position: relative;
+    }
+
+    .card-category-badge {
+      position: absolute;
+      top: 0.7rem;
+      left: 0.7rem;
+      background: rgba(44,40,37,0.6);
+      color: white;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      border-radius: 2rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .card-postcode-badge {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.7rem;
+      background: white;
+      color: var(--charcoal);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 2rem;
+    }
+
+    .card-body { padding: 1rem 1.1rem 1.2rem; }
+
+    .card-date {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--terracotta);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 0.4rem;
+      color: var(--charcoal);
+    }
+
+    .card-venue {
+      font-size: 0.82rem;
+      color: var(--mid-grey);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    /* ── MAP VIEW ── */
+    .map-container {
+      display: none;
+    }
+
+    .map-container.visible { display: block; }
+    .events-grid.hidden { display: none; }
+
+    #leaflet-map {
+      width: 100%;
+      height: 520px;
+      border-radius: 14px;
+      border: 1.5px solid var(--light-border);
+      z-index: 1;
+    }
+
+    /* Custom Leaflet popup styling */
+    .leaflet-popup-content-wrapper {
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(44,40,37,0.15);
+      border: 1.5px solid var(--light-border);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .leaflet-popup-content {
+      margin: 0.9rem 1rem;
+      min-width: 180px;
+    }
+
+    .popup-cat {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--mid-grey);
+      margin-bottom: 0.3rem;
+    }
+
+    .popup-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-bottom: 0.3rem;
+      line-height: 1.3;
+    }
+
+    .popup-date {
+      font-size: 0.78rem;
+      color: var(--terracotta);
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+    }
+
+    .popup-venue {
+      font-size: 0.78rem;
+      color: var(--mid-grey);
+      margin-bottom: 0.5rem;
+    }
+
+    .popup-link {
+      font-size: 0.78rem;
+      color: var(--terracotta);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .popup-link:hover { text-decoration: underline; }
+
+    .map-legend {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--mid-grey);
+      background: var(--warm-white);
+      border: 1px solid var(--light-border);
+      padding: 0.3rem 0.7rem;
+      border-radius: 2rem;
+    }
+
+    /* ── ABOUT PAGE ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .about-hero {
+      background: var(--forest);
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .about-hero h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      color: var(--cream);
+      font-weight: 900;
+      margin-bottom: 1rem;
+    }
+
+    .about-hero p {
+      color: rgba(245,239,224,0.7);
+      font-size: 1.05rem;
+      max-width: 540px;
+      margin: 0 auto;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .about-body {
+      max-width: 760px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .about-card {
+      background: var(--warm-white);
+      border: 1.5px solid var(--light-border);
+      border-radius: 14px;
+      padding: 1.5rem;
+    }
+
+    .about-card .card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+
+    .about-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .about-card p {
+      font-size: 0.9rem;
+      color: var(--mid-grey);
+      line-height: 1.6;
+    }
+
+    .contact-section {
+      background: var(--charcoal);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .contact-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--cream);
+      margin-bottom: 0.75rem;
+    }
+
+    .contact-section p {
+      color: rgba(245,239,224,0.6);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .contact-email {
+      display: inline-block;
+      background: var(--terracotta);
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .contact-email:hover { background: var(--terracotta-light); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--charcoal);
+      color: rgba(245,239,224,0.5);
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.82rem;
+      margin-top: 4rem;
+    }
+
+    footer strong { color: var(--cream); }
+
+    /* ── NO RESULTS ── */
+    .no-results {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--mid-grey);
+    }
+
+    .no-results .emoji { font-size: 2.5rem; margin-bottom: 1rem; }
+    .no-results h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--charcoal); margin-bottom: 0.5rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; padding-right: 0; }
+      nav ul { display: none; }
+      .about-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Round <em style="font-style:italic;color:var(--terracotta-light)">Here</em> NW</a>
+  <ul>
+    <li><a href="#" class="nav-link active" data-page="events">Events</a></li>
+    <li><a href="#" class="nav-link" data-page="about">About & Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════ EVENTS PAGE ══════════════════ -->
+<div id="page-events" class="page active">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">🗺 NW London's Community Calendar</div>
+    <h1>What's on <em>round here</em></h1>
+    <p>Discover local events across West Hampstead, Kilburn, Willesden, Kensal Green, Cricklewood & beyond.</p>
+    <div class="postcode-pills">
+      <button class="postcode-pill active" data-postcode="all">All Areas</button>
+      <button class="postcode-pill" data-postcode="NW6">NW6 · West Hampstead / Kilburn</button>
+      <button class="postcode-pill" data-postcode="NW10">NW10 · Willesden / Kensal Green</button>
+      <button class="postcode-pill" data-postcode="NW2">NW2 · Cricklewood / Brent Cross</button>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="main-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Search</div>
+        <input class="search-box" type="text" id="searchInput" placeholder="Search events…">
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">When</div>
+        <div class="date-btns">
+          <button class="date-btn active" data-date="all">All dates</button>
+          <button class="date-btn" data-date="today">Today</button>
+          <button class="date-btn" data-date="week">This week</button>
+          <button class="date-btn" data-date="weekend">Weekend</button>
+          <button class="date-btn" data-date="month">This month</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Category</div>
+        <div class="category-list" id="categoryList"></div>
+      </div>
+    </aside>
+
+    <!-- EVENTS CONTENT -->
+    <div class="content-area">
+      <div class="view-toggle">
+        <div class="results-count" id="resultsCount"></div>
+        <div class="toggle-btns">
+          <button class="toggle-btn active" id="gridToggle">⊞ Grid</button>
+          <button class="toggle-btn" id="mapToggle">⊙ Map</button>
+        </div>
+      </div>
+
+      <div class="events-grid" id="eventsGrid"></div>
+
+      <div class="map-container" id="mapContainer">
+        <div id="leaflet-map"></div>
+        <div class="map-legend" id="mapLegend"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ABOUT PAGE ══════════════════ -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <h2>About Round Here NW</h2>
+    <p>We're a community-run events hub bringing together everything happening across NW2, NW6 and NW10 — so you never miss what's going on on your doorstep.</p>
+  </div>
+  <div class="about-body">
+    <div class="about-grid">
+      <div class="about-card">
+        <div class="card-icon">🌍</div>
+        <h3>Three postcodes, one place</h3>
+        <p>From West Hampstead to Cricklewood, Willesden to Kensal Green — we cover the whole NW patch.</p>
+      </div>
+      <div class="about-card">
+        <div class="card-icon">🤝</div>
+        <h3>Community-powered</h3>
+        <p>Events are gathered from local sources across the borough. Know something we've missed? Let us know.</p>
+      </div>
+      <div class="about-card">
+        <div class="card-icon">🔄</div>
+        <h3>Always up to date</h3>
+        <p>We aim to pull from a range of local event sources so the calendar stays fresh and complete.</p>
+      </div>
+      <div class="about-card">
+        <div class="card-icon">🆓</div>
+        <h3>Free, forever</h3>
+        <p>Round Here NW is a free community resource. No ads, no sign-ups required to browse events.</p>
+      </div>
+    </div>
+
+    <div class="contact-section">
+      <h3>Get in touch</h3>
+      <p>Know of an event we've missed? Want to suggest a new source? Have feedback on the site? We'd love to hear from you.</p>
+      <a href="mailto:hello@roundherenw.co.uk" class="contact-email">✉ hello@roundherenw.co.uk</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Round Here NW</strong> — Your local events guide for NW2 · NW6 · NW10<br>
+  <span id="lastUpdated" style="margin-top:0.3rem;display:block;font-size:0.75rem;opacity:0.6"></span>
+  <span style="margin-top:0.3rem;display:block">Made with ♥ for the neighbourhood · © 2025</span>
+</footer>
+
+<script>
+  // ── CATEGORIES (static config) ──
+  const categories = [
+    { id: 'all',       label: 'All Events',     icon: '✨', color: '#C4613A' },
+    { id: 'music',     label: 'Music & Gigs',   icon: '🎵', color: '#8B5CF6' },
+    { id: 'food',      label: 'Food & Drink',   icon: '🍽', color: '#F59E0B' },
+    { id: 'sport',     label: 'Sport & Fitness',icon: '⚽', color: '#10B981' },
+    { id: 'arts',      label: 'Arts & Culture', icon: '🎨', color: '#EC4899' },
+    { id: 'community', label: 'Community',      icon: '🤝', color: '#3B82F6' },
+    { id: 'markets',   label: 'Markets',        icon: '🛍', color: '#D97706' },
+    { id: 'kids',      label: 'Family & Kids',  icon: '👶', color: '#06B6D4' },
+    { id: 'outdoors',  label: 'Outdoors',       icon: '🌿', color: '#65A30D' },
+  ];
+
+  // ── STATE ──
+  let events = [];
+  let activeCategory = 'all';
+  let activePostcode = 'all';
+  let activeDate = 'all';
+  let searchQuery = '';
+  let viewMode = 'grid';
+
+  // ── LOAD EVENTS from events.json ──
+  async function loadEvents() {
+    const grid = document.getElementById('eventsGrid');
+    grid.innerHTML = `<div class="no-results" style="grid-column:1/-1">
+      <div class="emoji">⏳</div>
+      <h3>Loading events…</h3>
+      <p>Fetching the latest from round here.</p>
+    </div>`;
+
+    try {
+      const res = await fetch('events.json');
+      if (!res.ok) throw new Error('events.json not found');
+      const data = await res.json();
+      events = data.events || [];
+
+      // Show last updated time in footer
+      if (data.lastUpdated) {
+        const d = new Date(data.lastUpdated);
+        const label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastUpdated').textContent = `Events last refreshed: ${label}`;
+      }
+    } catch (e) {
+      // Fallback: show a friendly message if no events.json yet
+      events = [];
+      grid.innerHTML = `<div class="no-results" style="grid-column:1/-1">
+        <div class="emoji">🔧</div>
+        <h3>Events coming soon</h3>
+        <p>Run <code style="background:rgba(0,0,0,0.08);padding:0.1rem 0.4rem;border-radius:4px">node fetch-events.js</code> to populate live events.</p>
+      </div>`;
+      document.getElementById('resultsCount').innerHTML = '';
+      renderCategories();
+      return;
+    }
+
+    renderAll();
+  }
+
+  // ── RENDER CATEGORIES ──
+  function renderCategories() {
+    const list = document.getElementById('categoryList');
+    list.innerHTML = '';
+    categories.forEach(cat => {
+      const count = cat.id === 'all' ? events.length : events.filter(e => e.cat === cat.id).length;
+      const btn = document.createElement('button');
+      btn.className = 'cat-btn' + (activeCategory === cat.id ? ' active' : '');
+      btn.dataset.cat = cat.id;
+      btn.innerHTML = `<span class="cat-icon">${cat.icon}</span>${cat.label}<span class="cat-count">${count}</span>`;
+      btn.addEventListener('click', () => { activeCategory = cat.id; renderAll(); });
+      list.appendChild(btn);
+    });
+  }
+
+  // ── FILTER ──
+  function getFiltered() {
+    return events.filter(e => {
+      const matchCat = activeCategory === 'all' || e.cat === activeCategory;
+      const matchPC = activePostcode === 'all' || e.postcode === activePostcode;
+      const matchDate = activeDate === 'all' || e.dateKey === activeDate;
+      const matchSearch = !searchQuery ||
+        e.title.toLowerCase().includes(searchQuery) ||
+        (e.venue || '').toLowerCase().includes(searchQuery);
+      return matchCat && matchPC && matchDate && matchSearch;
+    });
+  }
+
+  // ── RENDER GRID ──
+  function renderGrid(filtered) {
+    const grid = document.getElementById('eventsGrid');
+    grid.innerHTML = '';
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="no-results" style="grid-column:1/-1"><div class="emoji">🔍</div><h3>Nothing found round here</h3><p>Try adjusting your filters or search.</p></div>`;
+      return;
+    }
+    filtered.forEach((ev, i) => {
+      const cat = categories.find(c => c.id === ev.cat) || categories[0];
+      const card = document.createElement('div');
+      card.className = 'event-card';
+      card.style.animationDelay = `${i * 0.04}s`;
+      const freeTag = ev.isFree ? `<span style="position:absolute;bottom:0.7rem;right:0.7rem;background:#3B5C45;color:white;font-size:0.68rem;font-weight:600;padding:0.2rem 0.55rem;border-radius:2rem;">FREE</span>` : '';
+      card.innerHTML = `
+        <div class="card-thumb" style="background:${ev.bg || '#F5EFE0'}">
+          <span style="font-size:3rem">${ev.emoji || '📅'}</span>
+          <div class="card-category-badge">${cat.icon} ${cat.label}</div>
+          <div class="card-postcode-badge">${ev.postcode}</div>
+          ${freeTag}
+        </div>
+        <div class="card-body">
+          <div class="card-date">📅 ${ev.date}</div>
+          <div class="card-title">${ev.title}</div>
+          <div class="card-venue">📍 ${ev.venue || 'Venue TBC'}</div>
+          ${ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:0.6rem;font-size:0.78rem;color:var(--terracotta);font-weight:500;text-decoration:none;">More info →</a>` : ''}
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── LEAFLET MAP ──
+  let leafletMap = null;
+  let markerLayer = null;
+
+  function initMap() {
+    if (leafletMap) return; // already initialised
+    // Centre on NW6 (West Hampstead)
+    leafletMap = L.map('leaflet-map').setView([51.547, -0.191], 13);
+
+    // Warm, muted tile style from CartoDB Voyager
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(leafletMap);
+
+    markerLayer = L.layerGroup().addTo(leafletMap);
+  }
+
+  function renderMap(filtered) {
+    if (!leafletMap) return;
+
+    markerLayer.clearLayers();
+
+    // Events with coordinates get real pins; others are skipped on map
+    const mappable = filtered.filter(ev => ev.lat && ev.lng);
+
+    mappable.forEach(ev => {
+      const cat = categories.find(c => c.id === ev.cat) || categories[0];
+
+      // Custom coloured circle marker
+      const marker = L.circleMarker([ev.lat, ev.lng], {
+        radius: 10,
+        fillColor: cat.color,
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9,
+      });
+
+      const freeTag = ev.isFree ? `<span style="background:#3B5C45;color:white;font-size:0.65rem;font-weight:600;padding:0.15rem 0.4rem;border-radius:2rem;margin-left:0.3rem;">FREE</span>` : '';
+      const linkTag = ev.url ? `<a class="popup-link" href="${ev.url}" target="_blank" rel="noopener">More info →</a>` : '';
+
+      marker.bindPopup(`
+        <div class="popup-cat">${cat.icon} ${cat.label}</div>
+        <div class="popup-title">${ev.title}${freeTag}</div>
+        <div class="popup-date">📅 ${ev.date}</div>
+        <div class="popup-venue">📍 ${ev.venue || 'Venue TBC'}</div>
+        ${linkTag}
+      `, { maxWidth: 240 });
+
+      markerLayer.addLayer(marker);
+    });
+
+    // Fit map to markers if any
+    if (mappable.length > 0) {
+      const bounds = L.latLngBounds(mappable.map(ev => [ev.lat, ev.lng]));
+      leafletMap.fitBounds(bounds.pad(0.15));
+    }
+
+    // Legend
+    const usedCats = [...new Set(filtered.map(e => e.cat))];
+    const legend = document.getElementById('mapLegend');
+    legend.innerHTML = usedCats.map(cid => {
+      const c = categories.find(x => x.id === cid);
+      return c ? `<div class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.color};margin-right:2px"></span>${c.icon} ${c.label}</div>` : '';
+    }).join('');
+
+    if (mappable.length === 0) {
+      legend.innerHTML = `<div class="legend-item">📍 No mappable events in this filter — coordinates not available for all Eventbrite listings</div>`;
+    }
+  }
+
+  // ── RENDER ALL ──
+  function renderAll() {
+    const filtered = getFiltered();
+    document.getElementById('resultsCount').innerHTML = `<strong>${filtered.length}</strong> event${filtered.length !== 1 ? 's' : ''} found`;
+    renderCategories();
+    renderGrid(filtered);
+    renderMap(filtered);
+  }
+
+  // ── POSTCODE PILLS ──
+  document.querySelectorAll('.postcode-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.postcode-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePostcode = btn.dataset.postcode;
+      renderAll();
+    });
+  });
+
+  // ── DATE BTNS ──
+  document.querySelectorAll('.date-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeDate = btn.dataset.date;
+      renderAll();
+    });
+  });
+
+  // ── SEARCH ──
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.toLowerCase();
+    renderAll();
+  });
+
+  // ── VIEW TOGGLE ──
+  document.getElementById('gridToggle').addEventListener('click', () => {
+    viewMode = 'grid';
+    document.getElementById('gridToggle').classList.add('active');
+    document.getElementById('mapToggle').classList.remove('active');
+    document.getElementById('eventsGrid').classList.remove('hidden');
+    document.getElementById('mapContainer').classList.remove('visible');
+  });
+
+  document.getElementById('mapToggle').addEventListener('click', () => {
+    viewMode = 'map';
+    document.getElementById('mapToggle').classList.add('active');
+    document.getElementById('gridToggle').classList.remove('active');
+    document.getElementById('eventsGrid').classList.add('hidden');
+    document.getElementById('mapContainer').classList.add('visible');
+    // Init map on first open, then re-render with current filters
+    initMap();
+    renderMap(getFiltered());
+    // Leaflet needs a size nudge after becoming visible
+    setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
+  });
+
+  // ── PAGE NAV ──
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + link.dataset.page).classList.add('active');
+    });
+  });
+
+  // ── INIT ──
+  loadEvents();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</body>
+</html>

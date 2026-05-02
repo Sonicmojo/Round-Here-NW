@@ -11,10 +11,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -26,11 +22,21 @@ jobs:
           EVENTBRITE_TOKEN: ${{ secrets.EVENTBRITE_TOKEN }}
         run: node fetch-events.js
 
-- name: Push updated events.json
+      - name: Upload events.json via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "Round Here NW Bot"
-          git config user.email "bot@roundherenw.co.uk"
-          git add events.json
-          git diff --staged --quiet && echo "No changes" && exit 0
-          git commit -m "chore: update events $(date -u +%Y-%m-%d)"
-          git push --force origin main
+          CONTENT=$(base64 -w 0 events.json)
+          SHA=$(gh api repos/${{ github.repository }}/contents/events.json --jq '.sha' 2>/dev/null || echo "")
+          if [ -z "$SHA" ]; then
+            gh api repos/${{ github.repository }}/contents/events.json \
+              -X PUT \
+              -f message="chore: update events $(date -u +%Y-%m-%d)" \
+              -f content="$CONTENT"
+          else
+            gh api repos/${{ github.repository }}/contents/events.json \
+              -X PUT \
+              -f message="chore: update events $(date -u +%Y-%m-%d)" \
+              -f content="$CONTENT" \
+              -f sha="$SHA"
+          fi
